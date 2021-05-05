@@ -1,4 +1,4 @@
-# NN Template
+# Pixel CNN for MC **Ansatz**
 
 <p align="center">
     <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch-red?logo=pytorch&labelColor=gray"></a>
@@ -8,7 +8,16 @@
     <a href="https://dvc.org/"><img alt="Conf: hydra" src="https://img.shields.io/badge/data-dvc-9cf"></a>
     <a href="https://streamlit.io/"><img alt="UI: streamlit" src="https://img.shields.io/badge/ui-streamlit-orange"></a>
     <a href="https://black.readthedocs.io/en/stable/"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+    <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 </p>
+
+This is a custom implementation using [PyTorch Lightning](https://pytorchlightning.ai/) project of PixelCNN model from:
+* [Pixel Recurrent Neural Networks](https://arxiv.org/abs/1601.06759)
+* [Conditional Image Generation with PixelCNN Decoders](https://arxiv.org/abs/1606.05328)
+* [PixelCNN++: Improving the PixelCNN with Discretized Logistic Mixture Likelihood and Other Modifications](https://arxiv.org/abs/1701.05517)
+* [PixelSNAIL: An Improved Autoregressive Generative Model](https://arxiv.org/abs/1712.09763)
+
+# About <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 
 
 Generic template to bootstrap your [PyTorch](https://pytorch.org/get-started/locally/) project. Click on [![](https://img.shields.io/badge/-Use_this_template-success?style=flat)](https://github.com/lucmos/nn-template/generate) and avoid writing boilerplate code for:
@@ -29,7 +38,7 @@ to your `README`.
 
 Checkout the [`mwe` branch](https://github.com/lucmos/nn-template/tree/mwe) to view a minimum working example on MNIST.
 
-# Structure
+## Structure
 
 ```bash
 .
@@ -54,7 +63,7 @@ Checkout the [`mwe` branch](https://github.com/lucmos/nn-template/tree/mwe) to v
 └── wandb               # local experiments (auto-generated)
 ```
 
-# Streamlit
+## Streamlit
 [Streamlit](https://docs.streamlit.io/) is an open-source Python library that makes
 it easy to create and share beautiful, custom web apps for machine learning and data science.
 
@@ -73,7 +82,7 @@ Launch a minimal app with `PYTHONPATH=. streamlit run src/ui/run.py`. There is a
 
 
 
-# Data Version Control
+## Data Version Control
 
 DVC runs alongside `git` and uses the current commit hash to version control the data.
 
@@ -97,7 +106,7 @@ git add data/ImageNet.dvc data/.gitignore
 git commit -m "Add raw data"
 ```
 
-## Making changes
+### Making changes
 
 When you make a change to a file or directory, run `dvc add` again to track the latest version:
 
@@ -105,7 +114,7 @@ When you make a change to a file or directory, run `dvc add` again to track the 
 $ dvc add data/ImageNet
 ```
 
-## Switching between versions
+### Switching between versions
 
 The regular workflow is to use `git checkout` first to switch a branch, checkout a commit, or a revision of a `.dvc` file, and then run `dvc checkout` to sync data:
 
@@ -119,13 +128,13 @@ $ dvc checkout
 Read more in the [docs](https://dvc.org/doc/start/data-versioning)!
 
 
-# Weights and Biases
+## Weights and Biases
 
 Weights & Biases helps you keep track of your machine learning projects. Use tools to log hyperparameters and output metrics from your runs, then visualize and compare results and quickly share findings with your colleagues.
 
 [This](https://wandb.ai/gladia/nn-template?workspace=user-lucmos) is an example of a simple dashboard.
 
-## Quickstart
+### Quickstart
 
 Login to your `wandb` account, running once `wandb login`.
 Configure the logging in `conf/logging/*`.
@@ -140,7 +149,7 @@ Read more in the [docs](https://docs.wandb.ai/). Particularly useful the [`log` 
 `wandb` with the logger you prefer (you can even build your own).
  More about Lightning loggers [here](https://pytorch-lightning.readthedocs.io/en/latest/extensions/logging.html).
 
-# Hydra
+## Hydra
 
 Hydra is an open-source Python framework that simplifies the development of research and other complex applications. The key feature is the ability to dynamically create a hierarchical configuration by composition and override it through config files and the command line. The name Hydra comes from its ability to run multiple similar jobs - much like a Hydra with multiple heads.
 
@@ -149,7 +158,7 @@ The basic functionalities are intuitive: it is enough to change the configuratio
 Consider creating new root configurations `conf/myawesomeexp.yaml` instead of always using the default `conf/default.yaml`.
 
 
-## Sweeps
+### Sweeps
 
 You can easily perform hyperparameters [sweeps](https://hydra.cc/docs/advanced/override_grammar/extended), which override the configuration defined in `/conf/*`.
 
@@ -166,14 +175,14 @@ You can explore aggregate statistics or compare and analyze each run in the W&B 
 We recommend to go through at least the [Basic Tutorial](https://hydra.cc/docs/tutorials/basic/your_first_app/simple_cli), and the docs about [Instantiating objects with Hydra](https://hydra.cc/docs/patterns/instantiate_objects/overview).
 
 
-# PyTorch Lightning
+## PyTorch Lightning
 
 Lightning makes coding complex networks simple.
 It is not a high level framework like `keras`, but forces a neat code organization and encapsulation.
 
 You should be somewhat familiar with PyTorch and [PyTorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/index.html) before using this template.
 
-# Environment Variables
+## Environment Variables
 
 System specific variables (e.g. absolute paths to datasets) should not be under version control, otherwise there will be conflicts between different users.
 
