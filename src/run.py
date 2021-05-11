@@ -15,7 +15,7 @@ from pytorch_lightning.callbacks import (
 )
 from pytorch_lightning.loggers import WandbLogger
 
-from src.common.utils import log_hyperparameters, PROJECT_ROOT
+from common.utils import log_hyperparameters, PROJECT_ROOT
 
 
 def build_callbacks(cfg: DictConfig) -> List[Callback]:
@@ -91,6 +91,7 @@ def run(cfg: DictConfig) -> None:
     hydra.utils.log.info(f"Instantiating <{cfg.model._target_}>")
     model: pl.LightningModule = hydra.utils.instantiate(
         cfg.model,
+        physics=cfg.physics,
         optim=cfg.optim,
         data=cfg.data,
         logging=cfg.logging,
@@ -105,10 +106,7 @@ def run(cfg: DictConfig) -> None:
     if "wandb" in cfg.logging:
         hydra.utils.log.info(f"Instantiating <WandbLogger>")
         wandb_config = cfg.logging.wandb
-        wandb_logger = WandbLogger(
-            **wandb_config,
-            tags=cfg.core.tags,
-        )
+        wandb_logger = WandbLogger(**wandb_config, tags=cfg.core.tags,)
         hydra.utils.log.info(f"W&B is now watching <{cfg.logging.wandb_watch.log}>!")
         wandb_logger.watch(
             model,

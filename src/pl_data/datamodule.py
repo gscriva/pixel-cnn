@@ -9,7 +9,7 @@ import torch
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader, Dataset
 
-from src.common.utils import PROJECT_ROOT
+from common.utils import PROJECT_ROOT
 
 
 def worker_init_fn(id: int):
@@ -32,10 +32,7 @@ def worker_init_fn(id: int):
 
 class MyDataModule(pl.LightningDataModule):
     def __init__(
-        self,
-        datasets: DictConfig,
-        num_workers: DictConfig,
-        batch_size: DictConfig,
+        self, datasets: DictConfig, num_workers: DictConfig, batch_size: DictConfig,
     ):
         super().__init__()
         self.datasets = datasets
@@ -43,27 +40,20 @@ class MyDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
 
         self.train_dataset: Optional[Dataset] = None
-        self.val_datasets: Optional[Sequence[Dataset]] = None
-        self.test_datasets: Optional[Sequence[Dataset]] = None
+        self.val_dataset: Optional[Dataset] = None
+        self.test_dataset: Optional[Dataset] = None
 
     def prepare_data(self) -> None:
         # download only
         pass
 
     def setup(self, stage: Optional[str] = None):
-        # Here you should instantiate your datasets, you may also split the train into train and validation if needed.
         if stage is None or stage == "fit":
             self.train_dataset = hydra.utils.instantiate(self.datasets.train)
-            self.val_datasets = [
-                hydra.utils.instantiate(dataset_cfg)
-                for dataset_cfg in self.datasets.val
-            ]
+            self.val_dataset = hydra.utils.instantiate(self.datasets.val)
 
         if stage is None or stage == "test":
-            self.test_datasets = [
-                hydra.utils.instantiate(dataset_cfg)
-                for dataset_cfg in self.datasets.test
-            ]
+            self.test_dataset = hydra.utils.instantiate(self.datasets.test)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -74,29 +64,23 @@ class MyDataModule(pl.LightningDataModule):
             worker_init_fn=worker_init_fn,
         )
 
-    def val_dataloader(self) -> Sequence[DataLoader]:
-        return [
-            DataLoader(
-                dataset,
-                shuffle=False,
-                batch_size=self.batch_size.val,
-                num_workers=self.num_workers.val,
-                worker_init_fn=worker_init_fn,
-            )
-            for dataset in self.val_datasets
-        ]
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_dataset,
+            shuffle=False,
+            batch_size=self.batch_size.val,
+            num_workers=self.num_workers.val,
+            worker_init_fn=worker_init_fn,
+        )
 
     def test_dataloader(self) -> Sequence[DataLoader]:
-        return [
-            DataLoader(
-                dataset,
-                shuffle=False,
-                batch_size=self.batch_size.test,
-                num_workers=self.num_workers.test,
-                worker_init_fn=worker_init_fn,
-            )
-            for dataset in self.test_datasets
-        ]
+        return DataLoader(
+            self.test_dataset,
+            shuffle=False,
+            batch_size=self.batch_size.test,
+            num_workers=self.num_workers.test,
+            worker_init_fn=worker_init_fn,
+        )
 
     def __repr__(self) -> str:
         return (

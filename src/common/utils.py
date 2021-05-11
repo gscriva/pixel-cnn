@@ -54,9 +54,7 @@ STATS_KEY: str = "stats"
 
 # Adapted from https://github.com/hobogalaxy/lightning-hydra-template/blob/6bf03035107e12568e3e576e82f83da0f91d6a11/src/utils/template_utils.py#L125
 def log_hyperparameters(
-    cfg: DictConfig,
-    model: pl.LightningModule,
-    trainer: pl.Trainer,
+    cfg: DictConfig, model: pl.LightningModule, trainer: pl.Trainer,
 ) -> None:
     """This method controls which parameters from Hydra config are saved by Lightning loggers.
     Additionally saves:
@@ -84,6 +82,18 @@ def log_hyperparameters(
     # disable logging any more hyperparameters for all loggers
     # (this is just a trick to prevent trainer from logging hparams of model, since we already did that above)
     trainer.logger.log_hyperparams = lambda params: None
+
+
+def nll_loss(log_prob: torch.Tensor) -> torch.Tensor:
+    """Compute Negative Log Likelihood loss.
+
+    Args:
+        log_prob (torch.Tensor): Log probability of sample.
+
+    Returns:
+        torch.Tensor: Negative Log Likelihood.
+    """
+    return -1 / log_prob.shape[0] * log_prob.sum()
 
 
 # Load environment variables
