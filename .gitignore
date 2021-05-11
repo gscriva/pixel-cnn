@@ -213,8 +213,9 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
-# wandb save dir
+# cache and wandb save dir
 .cache
+wandb/
 
 # jupyter notebook checkpoints
 .ipynb_checkpoints
