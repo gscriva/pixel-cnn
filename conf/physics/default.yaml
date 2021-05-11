@@ -1,0 +1,10 @@
+# boundary condition
+boundary: 'periodic'
+# number of sites on each edge of the lattice
+L: 10
+# beta = 1 / k_B T
+beta: 1
+# use Z2 symmetry in sample and loss
+z2: True
+# small number to avoid 0 in division and log
+epsilon: 1e-7

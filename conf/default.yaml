@@ -2,7 +2,7 @@
 core:
   version: 0.0.1
   tags:
-    - mytag
+    - first-commit
 
 defaults:
   - data: default
@@ -11,5 +11,6 @@ defaults:
   - model: default
   - optim: default
   - train: default
+  - physics: default
 #    Decomment this parameter to get parallel job running
 #  - hydra/launcher: joblib

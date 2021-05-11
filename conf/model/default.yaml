@@ -1,1 +1,7 @@
-_target_: src.pl_modules.model.MyModel
+_target_: pl_modules.model.PixelCNN
+net_depth: 3
+net_width: 64
+kernel_size: 7 
+bias: False
+res_block: False
+final_conv: False
