@@ -218,9 +218,9 @@ fabric.properties
 wandb/
 
 # output file
-.npy
-.npz
+*.npy
+*.npz
 
 # jupyter notebook and checkpoints
-.ipynb
+*.ipynb
 .ipynb_checkpoints
