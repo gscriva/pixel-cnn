@@ -17,6 +17,32 @@ This is a custom implementation using [PyTorch Lightning](https://pytorchlightni
 * [PixelCNN++: Improving the PixelCNN with Discretized Logistic Mixture Likelihood and Other Modifications](https://arxiv.org/abs/1701.05517)
 * [PixelSNAIL: An Improved Autoregressive Generative Model](https://arxiv.org/abs/1712.09763)
 
+## Usage
+To use, create a user in [Weights and Biases](https://wandb.ai/home) and log in in the current environment typing ```bash wandb login```.
+
+Then you have to add train, validation and test datasets, which are ```.npy``` array of size [N,L,L] (L system size), in the correct folder.
+
+As last step remember to create a ```.env``` file that should look as
+```bash
+export YOUR_TRAIN_DATASET_PATH="/your/root/to/train/dataset"
+export YOUR_VAL_DATASET_PATH="/your/root/to/validation/dataset"
+export YOUR_TEST_DATASET_PATH="/your/root/to/validation/dataset"
+export PROJECT_ROOT="/your/project/root"
+```
+So now you add to your repository the following files
+```bash
+.             
+├── data                    # dataset dir
+│   ├── train_dataset.npy
+│   ├── validation_dataset.npy      
+│   ├── test_dataset.npy
+├── .env                    # system-specific env variables, e.g. PROJECT_ROOT
+│
+```
+To run training just type ```python src/run.py```. Best 2 checkpoints, i.e., best two models according to the validation loss, are saved in ```/your/project/root/wandb/offline-run-YYYYMMDD_HHMMSS-hash>/files/pixel-cnn/hash/checkpoints/epoch=XX-step=XXXX.ckpt```. 
+
+To load and use the model to generate new sample just follow the [PyTorch Lightning docs](https://pytorch-lightning.readthedocs.io/en/latest/common/weights_loading.html#checkpoint-loading).
+
 # About <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 
 
