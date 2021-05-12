@@ -5,6 +5,7 @@ import omegaconf
 import pytorch_lightning as pl
 import torch
 from torch import nn
+import numpy as np
 import torch.nn.functional as F
 from omegaconf import DictConfig
 from torch.optim import Optimizer
@@ -59,10 +60,10 @@ class PixelCNN(pl.LightningModule):
         self.save_hyperparameters()  # populate self.hparams with args and kwargs automagically!
 
         # Force the first x_hat to be 0.5
-        if self.hparams.bias and not self.hparams.pysics.z2:
-            self.register_buffer("x_hat_mask", torch.ones([self.L] * 2))
+        if self.hparams.bias:
+            self.register_buffer("x_hat_mask", torch.ones([self.hparams.physics.L] * 2))
             self.x_hat_mask[0, 0] = 0
-            self.register_buffer("x_hat_bias", torch.zeros([self.L] * 2))
+            self.register_buffer("x_hat_bias", torch.zeros([self.hparams.physics.L] * 2))
             self.x_hat_bias[0, 0] = 0.5
 
         layers = []
@@ -178,16 +179,8 @@ class PixelCNN(pl.LightningModule):
         Returns:
             torch.Tensor: Log probability of input configuration.
         """
-        x_hat = self.forward(sample)
+        x_hat = self.net(sample)
         log_prob = self._log_prob(sample, x_hat)
-
-        if self.z2:
-            # Density estimation on inverted sample
-            sample_inv = -sample
-            x_hat_inv = self.forward(sample_inv)
-            log_prob_inv = self._log_prob(sample_inv, x_hat_inv)
-            log_prob = torch.logsumexp(torch.stack([log_prob, log_prob_inv]), dim=0)
-            log_prob = log_prob - log(2)
 
         return log_prob
 
@@ -201,30 +194,32 @@ class PixelCNN(pl.LightningModule):
         x_hat = self.net(x)
 
         # Force the first x_hat to be 0.5
-        if self.hparams.bias and not self.hparams.physics.z2:
+        if self.hparams.bias:
             x_hat = x_hat * self.x_hat_mask + self.x_hat_bias
 
         return x_hat
 
-    def forward(self, x) -> Dict[str, torch.Tensor]:
+    def forward(self, num_sample: int) -> Dict[str, torch.Tensor]:
         """
-        Method for the forward pass used for generating new sample.
+        Method for generating new sample.
+        
+        Args:
+            num_sample (int): Sample of Ising Glass to generate.
+
         Returns:
-            torch.Tensor: prediction.
+            torch.Tensor: New sample.
         """
-        sample = torch.zeros([batch_size, 1, self.L, self.L], device=self.device)
-        for i in range(self.hparams.physics.L):
+        sample = torch.zeros(
+            [num_sample, 1, self.hparams.physics.L, self.hparams.physics.L],
+            device=self.device,
+        )
+        for i in self.hparams.physics.L):
             for j in range(self.hparams.physics.L):
-                x_hat = self.step(sample)
+                x_hat = self._forward(sample)
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
 
-        if self.z2:
-            # Binary random int 0/1
-            flip = torch.randint(2, [batch_size, 1, 1, 1], device=self.device) * 2 - 1
-            sample *= flip
-
         # compute log probability of the sample
-        log_prob = self.log_prob(sample)
+        log_prob = self._log_prob(sample, x_hat)
 
         return {"sample": sample, "prob": log_prob}
 
