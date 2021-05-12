@@ -217,5 +217,10 @@ fabric.properties
 .cache
 wandb/
 
-# jupyter notebook checkpoints
+# output file
+.npy
+.npz
+
+# jupyter notebook and checkpoints
+.ipynb
 .ipynb_checkpoints
