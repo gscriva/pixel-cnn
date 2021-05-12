@@ -6,7 +6,7 @@ wandb:
   project: pixel-cnn
   entity: null
   log_model: True
-  mode: 'offline'
+  mode: 'online'
 
 wandb_watch:
   log: 'all'
