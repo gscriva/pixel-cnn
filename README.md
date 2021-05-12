@@ -18,11 +18,11 @@ This is a custom implementation using [PyTorch Lightning](https://pytorchlightni
 * [PixelSNAIL: An Improved Autoregressive Generative Model](https://arxiv.org/abs/1712.09763)
 
 ## Usage
-To use, create a user in [Weights and Biases](https://wandb.ai/home) and log in in the current environment typing ```bash wandb login```.
+To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login yping `bash wandb login`.
 
-Then you have to add train, validation and test datasets, which are ```.npy``` array of size [N,L,L] (L system size), in the correct folder.
+Then you have to add train, validation and test datasets, which are `.npy` array of size `[N,L,L]` (L system size), in the correct folder.
 
-As last step remember to create a ```.env``` file that should look as
+As last step remember to create a `.env` file that should look as
 ```bash
 export YOUR_TRAIN_DATASET_PATH="/your/root/to/train/dataset"
 export YOUR_VAL_DATASET_PATH="/your/root/to/validation/dataset"
@@ -39,7 +39,7 @@ So now you add to your repository the following files
 ├── .env                    # system-specific env variables, e.g. PROJECT_ROOT
 │
 ```
-To run training just type ```python src/run.py```. Best 2 checkpoints, i.e., best two models according to the validation loss, are saved in ```/your/project/root/wandb/offline-run-YYYYMMDD_HHMMSS-hash>/files/pixel-cnn/hash/checkpoints/epoch=XX-step=XXXX.ckpt```. 
+To run training just type `python src/run.py`. Best 2 checkpoints, i.e., best two models according to the validation loss, are saved in `/your/project/root/wandb/offline-run-YYYYMMDD_HHMMSS-hash>/files/pixel-cnn/hash/checkpoints/epoch=XX-step=XXXX.ckpt`. 
 
 To load and use the model to generate new sample just follow the [PyTorch Lightning docs](https://pytorch-lightning.readthedocs.io/en/latest/common/weights_loading.html#checkpoint-loading).
 
