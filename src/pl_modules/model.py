@@ -63,7 +63,9 @@ class PixelCNN(pl.LightningModule):
         if self.hparams.bias:
             self.register_buffer("x_hat_mask", torch.ones([self.hparams.physics.L] * 2))
             self.x_hat_mask[0, 0] = 0
-            self.register_buffer("x_hat_bias", torch.zeros([self.hparams.physics.L] * 2))
+            self.register_buffer(
+                "x_hat_bias", torch.zeros([self.hparams.physics.L] * 2)
+            )
             self.x_hat_bias[0, 0] = 0.5
 
         layers = []
@@ -213,7 +215,7 @@ class PixelCNN(pl.LightningModule):
             [num_sample, 1, self.hparams.physics.L, self.hparams.physics.L],
             device=self.device,
         )
-        for i in self.hparams.physics.L):
+        for i in range(self.hparams.physics.L):
             for j in range(self.hparams.physics.L):
                 x_hat = self._forward(sample)
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
