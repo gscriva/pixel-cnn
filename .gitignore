@@ -220,6 +220,7 @@ wandb/
 # output file
 *.npy
 *.npz
+*.txt
 
 # jupyter notebook and checkpoints
 *.ipynb
