@@ -1,4 +1,4 @@
-from typing import Any, Dict, Sequence, Tuple, Union
+from typing import Any, Dict, Sequence, Tuple, Optional
 
 import hydra
 import omegaconf
@@ -9,6 +9,7 @@ import numpy as np
 import torch.nn.functional as F
 from omegaconf import DictConfig
 from torch.optim import Optimizer
+from tqdm import trange
 
 from common.utils import PROJECT_ROOT, nll_loss
 
@@ -202,28 +203,28 @@ class PixelCNN(pl.LightningModule):
         return x_hat
 
     def forward(self, num_sample: int) -> Dict[str, torch.Tensor]:
-        """
-        Method for generating new sample.
-        
+        """Method for generating new sample.
+
         Args:
             num_sample (int): Sample of Ising Glass to generate.
 
         Returns:
-            torch.Tensor: New sample.
+            Dict[str, torch.Tensor]: New sample and their probabilities.
         """
         sample = torch.zeros(
             [num_sample, 1, self.hparams.physics.L, self.hparams.physics.L],
             device=self.device,
         )
-        for i in range(self.hparams.physics.L):
+
+        for i in trange(self.hparams.physics.L, leave=False):
             for j in range(self.hparams.physics.L):
                 x_hat = self._forward(sample).detach()
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
 
-        # compute log probability of the sample
-        log_prob = self._log_prob(sample, x_hat)
+        # compute probability of the sample
+        prob = self._log_prob(sample, x_hat).exp()
 
-        return {"sample": sample.numpy(), "prob": log_prob.numpy()}
+        return {"sample": sample.squeeze(1).numpy(), "prob": prob.numpy()}
 
     def step(self, x) -> torch.Tensor:
         """Method for the forward pass.
