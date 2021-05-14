@@ -203,7 +203,8 @@ class PixelCNN(pl.LightningModule):
         return x_hat
 
     def forward(self, num_sample: int) -> Dict[str, torch.Tensor]:
-        """Method for generating new sample.
+        """
+        Method for generating new sample.
 
         Args:
             num_sample (int): Sample of Ising Glass to generate.
@@ -216,8 +217,8 @@ class PixelCNN(pl.LightningModule):
             device=self.device,
         )
 
-        for i in trange(self.hparams.physics.L, leave=False):
-            for j in range(self.hparams.physics.L):
+        for i in trange(self.hparams.physics.L):
+            for j in trange(self.hparams.physics.L, leave=False):
                 x_hat = self._forward(sample).detach()
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
 
