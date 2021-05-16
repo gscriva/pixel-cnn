@@ -156,8 +156,9 @@ class PixelCNN(pl.LightningModule):
         )
         return ResBlock(nn.Sequential(*layers))
 
-    def _log_prob(self, sample: torch.Tensor, x_hat: torch.Tensor) -> torch.Tensor:
-        """Helper to compute log prob of given sample and its conditional probaility.
+    def log_prob(self, sample: torch.Tensor, x_hat: torch.Tensor) -> torch.Tensor:
+        """Method to compute the logarithm of the probabilty of sample
+            and its conditional probaility.
 
         Args:
             sample (torch.Tensor): Ising Glass sample.
@@ -173,41 +174,24 @@ class PixelCNN(pl.LightningModule):
         log_prob = log_prob.view(log_prob.shape[0], -1).sum(dim=1)
         return log_prob
 
-    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        """Method to compute the log_prob of sample.
-
-        Args:
-            sample (torch.Tensor): Sample of Ising Glass.
-
-        Returns:
-            torch.Tensor: Log probability of input configuration.
-        """
-        x_hat = self.net(sample)
-        log_prob = self._log_prob(sample, x_hat)
-
-        return log_prob
-
     def _forward(self, x) -> torch.Tensor:
-        """
-        Method for the forward pass.
+        """Method for the forward pass.
+
         Returns:
             torch.Tensor: prediction.
         """
-
         x_hat = self.net(x)
 
         # Force the first x_hat to be 0.5
         if self.hparams.bias:
             x_hat = x_hat * self.x_hat_mask + self.x_hat_bias
-
         return x_hat
 
     def forward(self, num_sample: int) -> Dict[str, torch.Tensor]:
-        """
-        Method for generating new sample.
+        """Method for generating new sample.
 
         Args:
-            num_sample (int): Sample of Ising Glass to generate.
+            num_sample (int): Sample of Ising Glasses to generate.
 
         Returns:
             Dict[str, torch.Tensor]: New sample and their probabilities.
@@ -223,29 +207,28 @@ class PixelCNN(pl.LightningModule):
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
 
         # compute probability of the sample
-        prob = self._log_prob(sample, x_hat).exp()
-
+        prob = self.log_prob(sample, x_hat).exp()
         return {"sample": sample.squeeze(1).numpy(), "prob": prob.numpy()}
 
     def step(self, x) -> torch.Tensor:
         """Method for the forward pass.
         'training_step', 'validation_step' and 'test_step' should call
         this method in order to compute the loss.
+
         Returns:
             torch.Tensor: prediction.
         """
         x_hat = self.net(x)
 
         # Force the first x_hat to be 0.5
-        if self.hparams.bias and not self.hparams.physics.z2:
+        if self.hparams.bias:
             x_hat = x_hat * self.x_hat_mask + self.x_hat_bias
 
         # compute log_prob of the input
-        log_prob = self._log_prob(x, x_hat)
+        log_prob = self.log_prob(x, x_hat)
 
         # compute custom negative log likelihood
         loss = nll_loss(log_prob)
-
         return loss
 
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
@@ -268,8 +251,8 @@ class PixelCNN(pl.LightningModule):
         return loss
 
     def configure_optimizers(self,) -> Tuple[Sequence[Optimizer], Sequence[Any]]:
-        """
-        Choose what optimizers and learning-rate schedulers to use in your optimization.
+        """Choose what optimizers and learning-rate schedulers to use in your optimization.
+
         Return:
             Tuple: The first list has multiple optimizers, the second a list of LR schedulers (or lr_dict). 
                     May be present only one optimizer and one scheduler.
