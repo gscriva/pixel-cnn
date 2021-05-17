@@ -6,23 +6,25 @@
     <a href="https://hydra.cc/"><img alt="Conf: hydra" src="https://img.shields.io/badge/conf-hydra-blue"></a>
     <a href="https://wandb.ai/site"><img alt="Logging: wandb" src="https://img.shields.io/badge/logging-wandb-yellow"></a>
     <a href="https://dvc.org/"><img alt="Conf: hydra" src="https://img.shields.io/badge/data-dvc-9cf"></a>
-    <a href="https://streamlit.io/"><img alt="UI: streamlit" src="https://img.shields.io/badge/ui-streamlit-orange"></a>
     <a href="https://black.readthedocs.io/en/stable/"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
     <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 </p>
 
-This is a custom implementation using [PyTorch Lightning](https://pytorchlightning.ai/) project of PixelCNN model from:
+This is a custom implementation using [PyTorch Lightning](https://pytorchlightning.ai/) of PixelCNN model from:
 * [Pixel Recurrent Neural Networks](https://arxiv.org/abs/1601.06759)
 * [Conditional Image Generation with PixelCNN Decoders](https://arxiv.org/abs/1606.05328)
 * [PixelCNN++: Improving the PixelCNN with Discretized Logistic Mixture Likelihood and Other Modifications](https://arxiv.org/abs/1701.05517)
 * [PixelSNAIL: An Improved Autoregressive Generative Model](https://arxiv.org/abs/1712.09763)
 
+## Build the env
+We highly recommend to create a conda environment `conda create -n <env> python==3.9` and then install all the dependencies running `pip install -r requirements.txt`.
+
 ## Usage
-To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login yping `bash wandb login`.
+To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login yping `wandb login`.
 
-Then you have to add train, validation and test datasets, which are `.npy` array of size `[N,L,L]` (L is the lattice size), in the correct folder.
+Then you have to add train, validation and test datasets, which are `.npy` array of size `[N,L,L]` (`L` is the lattice size), in the correct folder, which is `data/`.
 
-As last step remember to create a `.env` file that should look as
+As last step remember to create a `.env` file (using the template `template.env`) that should look as
 ```bash
 export YOUR_TRAIN_DATASET_PATH="/your/root/to/train/dataset"
 export YOUR_VAL_DATASET_PATH="/your/root/to/validation/dataset"
@@ -40,10 +42,11 @@ So now you add to your repository the following files
 │
 ```
 To run training just type `python src/run.py`.
+If you need to modify default parameters just change the `conf/*` files according to your prefereces. 
 
-Best 2 checkpoints, i.e., best two models according to the validation loss, are saved in `/your/project/root/wandb/offline-run-YYYYMMDD_HHMMSS-hash/files/pixel-cnn/hash/checkpoints/epoch=XX-step=XXXX.ckpt`. 
+Best 2 checkpoints, i.e., best two models according to the validation loss, are saved in `/your/project/root/wandb/online-run-YYYYMMDD_HHMMSS-hash/files/pixel-cnn/hash/checkpoints/epoch=XX-step=XXXX.ckpt`. 
 
-To load and use the model to generate new sample just follow the [PyTorch Lightning docs](https://pytorch-lightning.readthedocs.io/en/latest/common/weights_loading.html#checkpoint-loading).
+To load and use the model to generate new sample run `python src/generate.py --ckpt_path </ckpt_path> --num_sample <num>`.
 
 # About <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 
@@ -90,25 +93,6 @@ Checkout the [`mwe` branch](https://github.com/lucmos/nn-template/tree/mwe) to v
 │   └── ui              # interactive streamlit apps
 └── wandb               # local experiments (auto-generated)
 ```
-
-## Streamlit
-[Streamlit](https://docs.streamlit.io/) is an open-source Python library that makes
-it easy to create and share beautiful, custom web apps for machine learning and data science.
-
-In just a few minutes, you can build and deploy powerful data apps to:
-
-- **Explore** your data
-- **Interact** with your model
-- **Analyze** your model behavior and input sensitivity
-- **Showcase** your prototype with [awesome web apps](https://streamlit.io/gallery)
-
-Moreover, Streamlit enables interactive development with automatic rerun on files changes.
-
-Launch a minimal app with `PYTHONPATH=. streamlit run src/ui/run.py`. There is a built-in function to restore a model checkpoint stored on W&B, with automatic download if the checkpoint is not present in the local machine:
-
-![](https://i.imgur.com/3lTnOA1.png)
-
-
 
 ## Data Version Control
 
