@@ -18,9 +18,9 @@ This is a custom implementation using [PyTorch Lightning](https://pytorchlightni
 * [PixelSNAIL: An Improved Autoregressive Generative Model](https://arxiv.org/abs/1712.09763)
 
 ## Usage
-To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login yping `bash wandb login`.
+To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login typing `wandb login`.
 
-Then you have to add train, validation and test datasets, which are `.npy` array of size `[N,L,L]` (L is the lattice size), in the correct folder.
+Then you have to add train, validation and test datasets, which are `.npy` arrays of size `[N,L,L]` (L is the lattice size), in the correct folder.
 
 As last step remember to create a `.env` file that should look as
 ```bash
