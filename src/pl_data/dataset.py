@@ -29,7 +29,7 @@ class MyDataset(Dataset):
         return self.dataset[index][0]
 
     def __repr__(self) -> str:
-        return f"MyDataset({self.name=}, {self.path=})"
+        return f"MyDataset(name={self.name}, path={self.path})"
 
 
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
