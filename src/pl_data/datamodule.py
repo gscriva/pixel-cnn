@@ -73,7 +73,7 @@ class MyDataModule(pl.LightningDataModule):
             worker_init_fn=worker_init_fn,
         )
 
-    def test_dataloader(self) -> Sequence[DataLoader]:
+    def test_dataloader(self) -> DataLoader:
         return DataLoader(
             self.test_dataset,
             shuffle=False,
@@ -85,9 +85,9 @@ class MyDataModule(pl.LightningDataModule):
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
-            f"{self.datasets=}, "
-            f"{self.num_workers=}, "
-            f"{self.batch_size=})"
+            f"dataset={self.datasets}, "
+            f"num_workers={self.num_workers}, "
+            f"batch_size={self.batch_size})"
         )
 
 
