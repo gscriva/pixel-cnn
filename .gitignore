@@ -225,3 +225,6 @@ wandb/
 # jupyter notebook and checkpoints
 *.ipynb
 .ipynb_checkpoints
+
+# vscode
+.vscode
