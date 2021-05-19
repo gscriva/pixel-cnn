@@ -25,7 +25,7 @@ save_name = (
     + "_sample-"
     + str(args.num_sample)
     + "_"
-    + args.ckpt_path.parts[-6]
+    + args.ckpt_path.parts[-3]
 )
 
 print("Saving...", save_name)

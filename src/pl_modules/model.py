@@ -142,7 +142,7 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Residual convolutional block.
         """
         layers = []
-        layers.append(nn.Conv2d(in_channels, in_channels, 1, bias=self.bias))
+        layers.append(nn.Conv2d(in_channels, in_channels, 1, bias=self.hparams.bias))
         layers.append(nn.PReLU(in_channels, init=0.5))
         layers.append(
             MaskedConv2d(
