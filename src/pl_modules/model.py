@@ -167,6 +167,7 @@ class PixelCNN(pl.LightningModule):
         Returns:
             torch.Tensor: Logarithm of the probabilty of the sample.
         """
+        sample, x_hat = sample.double(), x_hat.double()
         mask = (sample + 1) / 2
         log_prob = torch.log(x_hat + self.hparams.physics.epsilon) * mask + torch.log(
             1 - x_hat + self.hparams.physics.epsilon
@@ -187,7 +188,7 @@ class PixelCNN(pl.LightningModule):
             x_hat = x_hat * self.x_hat_mask + self.x_hat_bias
         return x_hat
 
-    def forward(self, num_sample: int) -> Dict[str, torch.Tensor]:
+    def forward(self, num_sample: int) -> Dict[str, np.ndarray]:
         """Method for generating new sample.
 
         Args:
@@ -205,7 +206,6 @@ class PixelCNN(pl.LightningModule):
             for j in trange(self.hparams.physics.L, leave=False):
                 x_hat = self._forward(sample).detach()
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
-
         # compute probability of the sample
         prob = self.log_prob(sample, x_hat).exp()
         return {"sample": sample.squeeze(1).numpy(), "prob": prob.numpy()}
