@@ -174,7 +174,11 @@ def mcmc(
         }
         np.savez(filename, out)
 
-    print("\nAccepted proposals: {0} ({1})".format(accepted, accepted / num_mc_steps))
+    print(
+        "\nAccepted proposals: {0} ({1} %)".format(
+            accepted, accepted / num_mc_steps * 100
+        )
+    )
 
 
 if __name__ == "__main__":
