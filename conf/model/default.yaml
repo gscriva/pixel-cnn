@@ -1,7 +1,8 @@
 _target_: pl_modules.model.PixelCNN
 net_depth: 3
 net_width: 32
-kernel_size: 7 
+activation: "prelu"
+kernel_size: 7
 bias: False
 res_block: False
 final_conv: False
