@@ -105,16 +105,12 @@ class PixelCNN(pl.LightningModule):
                 )
             )
         if self.hparams.final_conv:
-            layers.append(
-                self._get_activation_func(
-                    self.hparams.activation, self.hparams.net_width
-                )
-            )
+            layers.append(self._get_activation_func(self.hparams.net_width))
             layers.append(nn.Conv2d(self.hparams.net_width, 1, 1))
         layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*layers)
 
-    def _get_activation_func(self, activation: str, in_channels: int) -> nn.Module:
+    def _get_activation_func(self, in_channels: int) -> nn.Module:
         """Returns the requested activation function.
 
         Args:
@@ -124,23 +120,23 @@ class PixelCNN(pl.LightningModule):
         Returns:
             nn.Module: The chosen activation function.
         """
-        if activation == "relu":
+        if self.hparams.activation == "relu":
             activation_layer = nn.ReLU(in_channels)
-        elif activation == "prelu":
+        elif self.hparams.activation == "prelu":
             activation_layer = nn.PReLU(in_channels, init=0.5)
-        elif activation == "rrelu":
+        elif self.hparams.activation == "rrelu":
             activation_layer = nn.RReLU(in_channels)
-        elif activation == "leakyrelu":
+        elif self.hparams.activation == "leakyrelu":
             activation_layer = nn.LeakyReLU(in_channels)
-        elif activation == "gelu":
+        elif self.hparams.activation == "gelu":
             activation_layer = nn.GELU(in_channels)
-        elif activation == "selu":
+        elif self.hparams.activation == "selu":
             activation_layer = nn.SELU(in_channels)
-        elif activation == "silu":
+        elif self.hparams.activation == "silu":
             activation_layer = nn.SiLU(in_channels)
         else:
             raise NotImplementedError(
-                f"Activation function {activation} not implemented"
+                f"Activation function {self.hparams.activation} not implemented"
             )
         return activation_layer
 
@@ -155,7 +151,7 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Convolutional layer + activation function.
         """
         layers = []
-        layers.append(self._get_activation_func(self.hparams.activation, in_channels))
+        layers.append(self._get_activation_func(in_channels))
         layers.append(
             MaskedConv2d(
                 in_channels,
@@ -180,13 +176,11 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Residual convolutional block.
         """
         layers = []
-        layers.append(self._get_activation_func(self.hparams.activation, in_channels))
+        # layers.append(self._get_activation_func(in_channels))
         layers.append(
             nn.Conv2d(in_channels, in_channels // 2, 1, bias=self.hparams.bias)
         )
-        layers.append(
-            self._get_activation_func(self.hparams.activation, in_channels // 2)
-        )
+        layers.append(self._get_activation_func(in_channels // 2))
         layers.append(
             MaskedConv2d(
                 in_channels // 2,
@@ -197,9 +191,7 @@ class PixelCNN(pl.LightningModule):
                 mask_type="B",
             )
         )
-        layers.append(
-            self._get_activation_func(self.hparams.activation, in_channels // 2)
-        )
+        # layers.append(self._get_activation_func(in_channels // 2))
         layers.append(
             nn.Conv2d(in_channels // 2, out_channels, 1, bias=self.hparams.bias)
         )
