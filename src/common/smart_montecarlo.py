@@ -119,8 +119,9 @@ def mcmc(
     # compute boltzmann probability
     accepted_boltz_prob = compute_prob(accepted_eng, beta, L ** 2)
 
-    # for idx in trange(num_mc_steps, leave=True):
-    for idx in range(num_mc_steps):
+    print(f"\nPerforming MCMC")
+
+    for idx in trange(num_mc_steps, leave=True):
         # get next sample and its energy
         trial_sample, trial_prob = proposals[idx + 1], probs[idx + 1]
         trial_eng = compute_eng(L, J, trial_sample)
@@ -172,9 +173,14 @@ def mcmc(
             "samples": samples,
             "energies": energies,
         }
+        print("\nSaving MCMC output as {0}".format(filename))
         np.savez(filename, out)
 
-    print("\n\nAccepted proposals: {0}".format(accepted))
+    print(
+        "\nAccepted proposals: {0} ({1} %)\n".format(
+            accepted, accepted / num_mc_steps * 100
+        )
+    )
 
 
 if __name__ == "__main__":
