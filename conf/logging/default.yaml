@@ -4,7 +4,7 @@ progress_bar_refresh_rate: 20
 
 wandb:
   project: pixel-cnn
-  save_dir: None
+  save_dir: null
   entity: null
   log_model: True
   mode: 'online'
