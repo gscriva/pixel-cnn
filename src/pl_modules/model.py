@@ -1,4 +1,4 @@
-from typing import Any, Dict, Sequence, Tuple, Optional
+from typing import Any, Dict, Sequence, Tuple
 
 import hydra
 import omegaconf
@@ -25,12 +25,16 @@ class ResBlock(nn.Module):
 
 class MaskedConv2d(nn.Conv2d):
     def __init__(self, *args, **kwargs) -> None:
-        self.exclusive = kwargs.pop("exclusive")
+        # remove mask_type kwargs
+        self.mask_type = kwargs.pop("mask_type")
         super(MaskedConv2d, self).__init__(*args, **kwargs)
 
         _, _, kh, kw = self.weight.shape
         self.register_buffer("mask", torch.ones([kh, kw]))
-        self.mask[kh // 2, kw // 2 + (not self.exclusive) :] = 0
+        self.mask[kh // 2, kw // 2 + 1 :] = 0
+        # type_mask=A excludes the central pixel
+        if self.mask_type == "A":
+            self.mask[kh // 2, kw // 2] = 0
         self.mask[kh // 2 + 1 :] = 0
         self.weight.data *= self.mask
 
@@ -51,7 +55,7 @@ class MaskedConv2d(nn.Conv2d):
     def extra_repr(self):
         return super(
             MaskedConv2d, self
-        ).extra_repr() + ", exclusive={exclusive}".format(**self.__dict__)
+        ).extra_repr() + ", mask_type={mask_type}".format(**self.__dict__)
 
 
 class PixelCNN(pl.LightningModule):
@@ -77,20 +81,20 @@ class PixelCNN(pl.LightningModule):
                 self.hparams.kernel_size,
                 padding=(self.hparams.kernel_size - 1) // 2,
                 bias=self.hparams.bias,
-                exclusive=True,
+                mask_type="A",
             )
         )
-        for count in range(self.hparams.net_depth - 2):
+        for _ in range(self.hparams.net_depth - 2):
             if self.hparams.res_block:
                 layers.append(
                     self._build_res_block(
-                        self.hparams.net_width, self.hparams.net_width
+                        self.hparams.net_width, self.hparams.net_width,
                     )
                 )
             else:
                 layers.append(
                     self._build_simple_block(
-                        self.hparams.net_width, self.hparams.net_width
+                        self.hparams.net_width, self.hparams.net_width,
                     )
                 )
         if self.hparams.net_depth >= 2:
@@ -101,10 +105,36 @@ class PixelCNN(pl.LightningModule):
                 )
             )
         if self.hparams.final_conv:
-            layers.append(nn.PReLU(self.hparams.net_width, init=0.5))
+            layers.append(self._get_activation_func())
             layers.append(nn.Conv2d(self.hparams.net_width, 1, 1))
         layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*layers)
+
+    def _get_activation_func(self) -> nn.Module:
+        """Returns the requested activation function.
+
+        Returns:
+            nn.Module: The chosen activation function.
+        """
+        if self.hparams.activation == "relu":
+            activation_layer = nn.ReLU()
+        elif self.hparams.activation == "prelu":
+            activation_layer = nn.PReLU(init=0.5)
+        elif self.hparams.activation == "rrelu":
+            activation_layer = nn.RReLU()
+        elif self.hparams.activation == "leakyrelu":
+            activation_layer = nn.LeakyReLU()
+        elif self.hparams.activation == "gelu":
+            activation_layer = nn.GELU()
+        elif self.hparams.activation == "selu":
+            activation_layer = nn.SELU()
+        elif self.hparams.activation == "silu":
+            activation_layer = nn.SiLU()
+        else:
+            raise NotImplementedError(
+                f"Activation function {self.hparams.activation} not implemented"
+            )
+        return activation_layer
 
     def _build_simple_block(self, in_channels: int, out_channels: int) -> nn.Module:
         """Build a masked convolutional block
@@ -117,7 +147,7 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Convolutional layer + activation function.
         """
         layers = []
-        layers.append(nn.PReLU(in_channels, init=0.5))
+        layers.append(self._get_activation_func())
         layers.append(
             MaskedConv2d(
                 in_channels,
@@ -125,7 +155,7 @@ class PixelCNN(pl.LightningModule):
                 self.hparams.kernel_size,
                 padding=(self.hparams.kernel_size - 1) // 2,
                 bias=self.hparams.bias,
-                exclusive=False,
+                mask_type="B",
             )
         )
         return nn.Sequential(*layers)
@@ -142,17 +172,24 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Residual convolutional block.
         """
         layers = []
-        layers.append(nn.Conv2d(in_channels, in_channels, 1, bias=self.hparams.bias))
-        layers.append(nn.PReLU(in_channels, init=0.5))
+        layers.append(self._get_activation_func())
+        layers.append(
+            nn.Conv2d(in_channels, in_channels // 2, 1, bias=self.hparams.bias)
+        )
+        layers.append(self._get_activation_func())
         layers.append(
             MaskedConv2d(
-                in_channels,
-                out_channels,
+                in_channels // 2,
+                in_channels // 2,
                 self.hparams.kernel_size,
                 padding=(self.hparams.kernel_size - 1) // 2,
                 bias=self.hparams.bias,
-                exclusive=False,
+                mask_type="B",
             )
+        )
+        layers.append(self._get_activation_func())
+        layers.append(
+            nn.Conv2d(in_channels // 2, out_channels, 1, bias=self.hparams.bias)
         )
         return ResBlock(nn.Sequential(*layers))
 
