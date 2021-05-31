@@ -7,20 +7,20 @@
     <a href="https://wandb.ai/site"><img alt="Logging: wandb" src="https://img.shields.io/badge/logging-wandb-yellow"></a>
     <a href="https://dvc.org/"><img alt="Conf: hydra" src="https://img.shields.io/badge/data-dvc-9cf"></a>
     <a href="https://black.readthedocs.io/en/stable/"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-    <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
+    <a href="https://github.com/lucmos/nn-template"><img alt="Template" src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 </p>
 
-This is a custom implementation using [PyTorch Lightning](https://pytorchlightning.ai/) of PixelCNN model from:
+This is a custom implementation using [PyTorch Lightning](https://pytorchlightning.ai/) of the autoregressive PixelCNN model, see also:
 * [Pixel Recurrent Neural Networks](https://arxiv.org/abs/1601.06759)
 * [Conditional Image Generation with PixelCNN Decoders](https://arxiv.org/abs/1606.05328)
 * [PixelCNN++: Improving the PixelCNN with Discretized Logistic Mixture Likelihood and Other Modifications](https://arxiv.org/abs/1701.05517)
 * [PixelSNAIL: An Improved Autoregressive Generative Model](https://arxiv.org/abs/1712.09763)
 
 ## Build the env
-We highly recommend to create a conda environment `conda create -n <env> python==3.9` and then install all the dependencies running `pip install -r requirements.txt`.
+We highly recommend to create an isolated environment, e.g., using conda `conda create -n <env> python==3.9` and then install all the dependencies running `pip install -r requirements.txt`.
 
 ## Usage
-To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login yping `wandb login`.
+To use, create your user in [Weights and Biases](https://wandb.ai/home) (if you don't have one) and login typing `wandb login`.
 
 Then you have to add train, validation and test datasets, which are `.npy` array of size `[N,L,L]` (`L` is the lattice size), in the correct folder, which is `data/`.
 
