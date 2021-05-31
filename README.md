@@ -1,4 +1,4 @@
-# Pixel CNN for MC **Ansatz**
+# PixelCNN for MCMC *Ansatz*
 
 <p align="center">
     <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch-red?logo=pytorch&labelColor=gray"></a>
@@ -46,7 +46,7 @@ If you need to modify default parameters just change the `conf/*` files accordin
 
 Best 2 checkpoints, i.e., best two models according to the validation loss, are saved in `/your/project/root/wandb/online-run-YYYYMMDD_HHMMSS-hash/files/pixel-cnn/hash/checkpoints/epoch=XX-step=XXXX.ckpt`. 
 
-To load and use the model to generate new sample run `python src/generate.py --ckpt_path </ckpt_path> --num_sample <num>`.
+To load and use the model to generate new sample run `python src/generate.py --ckpt_path <ckpt_path> --num_sample <num>`.
 
 # About <a href="https://github.com/lucmos/nn-template"><img alt=![] src="https://shields.io/badge/-nn--template-emerald?style=flat&logo=github&labelColor=gray"></a>
 
