@@ -1,0 +1,5 @@
+outs:
+- md5: 52d7c26d713fe58e98ca9bd560a44caa.dir
+  size: 108000384
+  nfiles: 3
+  path: 100-v0
