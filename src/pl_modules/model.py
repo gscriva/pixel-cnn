@@ -58,6 +58,35 @@ class MaskedConv2d(nn.Conv2d):
         ).extra_repr() + ", mask_type={mask_type}".format(**self.__dict__)
 
 
+class GetActivation(nn.Module):
+    """Returns the requested activation function.
+    """
+
+    def __init__(self, activation) -> None:
+        super(GetActivation, self).__init__()
+        if activation == "relu":
+            self.activation = nn.ReLU()
+        elif activation == "prelu":
+            self.activation = nn.PReLU(init=0.5)
+        elif activation == "rrelu":
+            self.activation = nn.RReLU()
+        elif activation == "leakyrelu":
+            self.activation = nn.LeakyReLU()
+        elif activation == "gelu":
+            self.activation = nn.GELU()
+        elif activation == "selu":
+            self.activation = nn.SELU()
+        elif activation == "silu":
+            self.activation = nn.SiLU()
+        else:
+            raise NotImplementedError(
+                f"Activation function {activation} not implemented"
+            )
+
+    def forward(self, x):
+        return self.activation(x)
+
+
 class PixelCNN(pl.LightningModule):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__()
@@ -73,7 +102,7 @@ class PixelCNN(pl.LightningModule):
             )
             self.x_hat_bias[0, 0] = 0.5
 
-        layers = []
+        layers = nn.ModuleList()
         layers.append(
             MaskedConv2d(
                 1,
@@ -84,19 +113,18 @@ class PixelCNN(pl.LightningModule):
                 mask_type="A",
             )
         )
-        for _ in range(self.hparams.net_depth - 2):
-            if self.hparams.res_block:
-                layers.append(
-                    self._build_res_block(
-                        self.hparams.net_width, self.hparams.net_width,
-                    )
+
+        layers.extend(
+            [
+                self._build_pixel_block(
+                    self.hparams.net_width,
+                    self.hparams.net_width,
+                    self.hparams.res_block,
                 )
-            else:
-                layers.append(
-                    self._build_simple_block(
-                        self.hparams.net_width, self.hparams.net_width,
-                    )
-                )
+                for _ in range(self.hparams.net_depth - 2)
+            ]
+        )
+
         if self.hparams.net_depth >= 2:
             layers.append(
                 self._build_simple_block(
@@ -104,50 +132,45 @@ class PixelCNN(pl.LightningModule):
                     self.hparams.net_width if self.hparams.final_conv else 1,
                 )
             )
+
         if self.hparams.final_conv:
-            layers.append(self._get_activation_func())
+            layers.append(GetActivation(self.hparams.activation))
             layers.append(nn.Conv2d(self.hparams.net_width, 1, 1))
+
         layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*layers)
 
-    def _get_activation_func(self) -> nn.Module:
-        """Returns the requested activation function.
+    def _build_pixel_block(
+        self, in_channels: int, out_channels: int, res_block: bool
+    ) -> nn.Module:
+        """Returns a Residual or a Simple Pixel Block. 
+
+        Args:
+            in_channels (int): Input channels.
+            out_channels (int): Output channels.
+            res_block (bool): Set True if the block is residual.
 
         Returns:
-            nn.Module: The chosen activation function.
+            nn.Module: Pixel Block.
         """
-        if self.hparams.activation == "relu":
-            activation_layer = nn.ReLU()
-        elif self.hparams.activation == "prelu":
-            activation_layer = nn.PReLU(init=0.5)
-        elif self.hparams.activation == "rrelu":
-            activation_layer = nn.RReLU()
-        elif self.hparams.activation == "leakyrelu":
-            activation_layer = nn.LeakyReLU()
-        elif self.hparams.activation == "gelu":
-            activation_layer = nn.GELU()
-        elif self.hparams.activation == "selu":
-            activation_layer = nn.SELU()
-        elif self.hparams.activation == "silu":
-            activation_layer = nn.SiLU()
+        if res_block:
+            pixel_block = self._build_res_block(in_channels, out_channels)
         else:
-            raise NotImplementedError(
-                f"Activation function {self.hparams.activation} not implemented"
-            )
-        return activation_layer
+            pixel_block = self._build_simple_block(in_channels, out_channels)
+        return pixel_block
 
     def _build_simple_block(self, in_channels: int, out_channels: int) -> nn.Module:
-        """Build a masked convolutional block
+        """Build a masked convolutional block.
 
         Args:
             in_channels (int): Input channels.
             out_channels (int): Output channels.
 
         Returns:
-            nn.Module: Convolutional layer + activation function.
+            nn.Module: Convolutional Pixel Block.
         """
-        layers = []
-        layers.append(self._get_activation_func())
+        layers = nn.ModuleList()
+        layers.append(GetActivation(self.hparams.activation))
         layers.append(
             MaskedConv2d(
                 in_channels,
@@ -169,14 +192,14 @@ class PixelCNN(pl.LightningModule):
             out_channels (int): Output channels.
 
         Returns:
-            nn.Module: Residual convolutional block.
+            nn.Module: Residual Pixel block.
         """
-        layers = []
-        layers.append(self._get_activation_func())
+        layers = nn.ModuleList()
+        layers.append(GetActivation(self.hparams.activation))
         layers.append(
             nn.Conv2d(in_channels, in_channels // 2, 1, bias=self.hparams.bias)
         )
-        layers.append(self._get_activation_func())
+        layers.append(GetActivation(self.hparams.activation))
         layers.append(
             MaskedConv2d(
                 in_channels // 2,
@@ -187,7 +210,7 @@ class PixelCNN(pl.LightningModule):
                 mask_type="B",
             )
         )
-        layers.append(self._get_activation_func())
+        layers.append(GetActivation(self.hparams.activation))
         layers.append(
             nn.Conv2d(in_channels // 2, out_channels, 1, bias=self.hparams.bias)
         )
@@ -266,6 +289,8 @@ class PixelCNN(pl.LightningModule):
 
         # compute custom negative log likelihood
         loss = nll_loss(log_prob)
+        criterion = nn.NLLLoss()
+        print(loss, criterion(x.long(), torch.log(x_hat.squeeze()).long()))
         return loss
 
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
