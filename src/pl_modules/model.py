@@ -58,6 +58,17 @@ class MaskedConv2d(nn.Conv2d):
         ).extra_repr() + ", mask_type={mask_type}".format(**self.__dict__)
 
 
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, ker_size, activation) -> None:
+        super(ConvBlock, self).__init__()
+        self.conv_layer = nn.Sequential(
+            GetActivation(activation), nn.Conv2d(in_channels, out_channels, ker_size)
+        )
+
+    def forward(self, x):
+        return self.conv_layer(x)
+
+
 class GetActivation(nn.Module):
     """Returns the requested activation function.
     """
@@ -125,7 +136,7 @@ class PixelCNN(pl.LightningModule):
             ]
         )
 
-        if self.hparams.net_depth >= 2:
+        if self.hparams.net_depth >= 2 and not self.hparams.final_conv:
             layers.append(
                 self._build_simple_block(
                     self.hparams.net_width,
@@ -134,8 +145,17 @@ class PixelCNN(pl.LightningModule):
             )
 
         if self.hparams.final_conv:
-            layers.append(GetActivation(self.hparams.activation))
-            layers.append(nn.Conv2d(self.hparams.net_width, 1, 1))
+            layers.append(
+                ConvBlock(
+                    self.hparams.net_width,
+                    self.hparams.net_width,
+                    1,
+                    self.hparams.activation,
+                )
+            )
+            layers.append(
+                ConvBlock(self.hparams.net_width, 1, 1, self.hparams.activation)
+            )
 
         layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*layers)
@@ -289,8 +309,6 @@ class PixelCNN(pl.LightningModule):
 
         # compute custom negative log likelihood
         loss = nll_loss(log_prob)
-        criterion = nn.NLLLoss()
-        print(loss, criterion(x.long(), torch.log(x_hat.squeeze()).long()))
         return loss
 
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
