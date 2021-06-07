@@ -247,7 +247,7 @@ class PixelCNN(pl.LightningModule):
         Returns:
             torch.Tensor: Logarithm of the probabilty of the sample.
         """
-        sample, x_hat = sample.double(), x_hat.double()
+        sample, x_hat = sample, x_hat
         mask = (sample + 1) / 2
         log_prob = torch.log(x_hat + self.hparams.physics.epsilon) * mask + torch.log(
             1 - x_hat + self.hparams.physics.epsilon
@@ -287,8 +287,8 @@ class PixelCNN(pl.LightningModule):
                 x_hat = self._forward(sample).detach()
                 sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
         # compute probability of the sample
-        prob = self.log_prob(sample, x_hat).exp()
-        return {"sample": sample.squeeze(1).numpy(), "prob": prob.numpy()}
+        log_prob = self.log_prob(sample, x_hat)
+        return {"sample": sample.squeeze(1).numpy(), "log_prob": log_prob.numpy()}
 
     def step(self, x) -> torch.Tensor:
         """Method for the forward pass.

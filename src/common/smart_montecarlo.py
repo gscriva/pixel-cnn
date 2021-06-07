@@ -43,9 +43,9 @@ def compute_prob(eng: float, beta: float, num_spin: int) -> float:
         num_spin (int): Number of spins in the sample.
 
     Returns:
-        float: Boltzmann probability.
+        float: Log-Boltzmann probability.
     """
-    return np.exp(-beta * num_spin * eng)
+    return -beta * num_spin * eng
 
 
 # TODO: Can be faster than this?
@@ -78,7 +78,7 @@ def load_data(
         data = sample_path
     else:
         raise ValueError("Neither a path or a Numpy dataset!")
-    return data["sample"], data["prob"]
+    return data["sample"], data["log_prob"]
 
 
 @jit(nopython=True)
@@ -96,10 +96,10 @@ def mcmc(
 ) -> None:
 
     # load data generate by PixelCNN
-    proposals, probs = load_data(sample_path)
+    proposals, log_probs = load_data(sample_path)
 
     # get the first sample and its energy
-    accepted_sample, accepted_prob = proposals[0], probs[0]
+    accepted_sample, accepted_log_prob = proposals[0], log_probs[0]
 
     # get the dimension of the sample from the
     L = accepted_sample.shape[-1]
@@ -117,20 +117,25 @@ def mcmc(
     # compute the energy of the new configuration
     accepted_eng = compute_eng(L, J, accepted_sample)
     # compute boltzmann probability
-    accepted_boltz_prob = compute_prob(accepted_eng, beta, L ** 2)
+    accepted_boltz_log_prob = compute_prob(accepted_eng, beta, L ** 2)
 
     print(f"\nPerforming MCMC")
 
     for idx in trange(num_mc_steps, leave=True):
         # get next sample and its energy
-        trial_sample, trial_prob = proposals[idx + 1], probs[idx + 1]
+        trial_sample, trial_log_prob = proposals[idx + 1], log_probs[idx + 1]
         trial_eng = compute_eng(L, J, trial_sample)
         # compute Boltzmann probability
-        trial_boltz_prob = compute_prob(trial_eng, beta, L ** 2)
+        trial_boltz_log_prob = compute_prob(trial_eng, beta, L ** 2)
 
         # get the transition probability
         prob_ratio.append(
-            (accepted_prob / trial_prob) * (trial_boltz_prob / accepted_boltz_prob)
+            np.exp(
+                accepted_log_prob
+                + trial_log_prob
+                + trial_boltz_log_prob
+                - accepted_boltz_log_prob
+            )
         )
         transition_prob.append(min(1.0, prob_ratio[idx]))
 
@@ -140,9 +145,9 @@ def mcmc(
         ):
             # update energy, prob and sample
             accepted_eng = np.copy(trial_eng)
-            accepted_prob = np.copy(trial_prob)
+            accepted_log_prob = np.copy(trial_log_prob)
             accepted_sample = np.copy(trial_sample)
-            accepted_boltz_prob = np.copy(trial_boltz_prob)
+            accepted_boltz_log_prob = np.copy(trial_boltz_log_prob)
             accepted += 1
 
         # save acceped sample and its energy
