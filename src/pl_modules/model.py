@@ -140,7 +140,7 @@ class PixelCNN(pl.LightningModule):
             layers.append(
                 self._build_simple_block(
                     self.hparams.net_width,
-                    self.hparams.net_width if self.hparams.final_conv else 1,
+                    self.hparams.net_width if self.hparams.final_conv else 2,
                 )
             )
 
@@ -154,10 +154,10 @@ class PixelCNN(pl.LightningModule):
                 )
             )
             layers.append(
-                ConvBlock(self.hparams.net_width, 1, 1, self.hparams.activation)
+                ConvBlock(self.hparams.net_width, 2, 1, self.hparams.activation)
             )
 
-        layers.append(nn.Sigmoid())
+        layers.append(nn.LogSoftmax(dim=1))
         self.net = nn.Sequential(*layers)
 
     def _build_pixel_block(
@@ -247,11 +247,8 @@ class PixelCNN(pl.LightningModule):
         Returns:
             torch.Tensor: Logarithm of the probabilty of the sample.
         """
-        sample, x_hat = sample, x_hat
-        mask = (sample + 1) / 2
-        log_prob = torch.log(x_hat + self.hparams.physics.epsilon) * mask + torch.log(
-            1 - x_hat + self.hparams.physics.epsilon
-        ) * (1 - mask)
+        mask = torch.cat(((-sample + 1) / 2, (sample + 1) / 2), dim=1)
+        log_prob = x_hat * mask
         log_prob = log_prob.view(log_prob.shape[0], -1).sum(dim=1)
         return log_prob
 
@@ -285,10 +282,15 @@ class PixelCNN(pl.LightningModule):
         for i in trange(self.hparams.physics.L):
             for j in trange(self.hparams.physics.L, leave=False):
                 x_hat = self._forward(sample).detach()
-                sample[:, :, i, j] = torch.bernoulli(x_hat[:, :, i, j]) * 2 - 1
+                sample[:, :, i, j] = (
+                    torch.bernoulli(torch.exp(x_hat[:, 1, i, j]).unsqueeze(1)) * 2 - 1
+                )
         # compute probability of the sample
-        log_prob = self.log_prob(sample, x_hat)
-        return {"sample": sample.squeeze(1).numpy(), "log_prob": log_prob.numpy()}
+        log_prob = self.log_prob(sample, x_hat[:, 1, :, :].unsqueeze(1))
+        return {
+            "sample": sample.squeeze(1).numpy(),
+            "log_prob": log_prob.numpy(),
+        }
 
     def step(self, x) -> torch.Tensor:
         """Method for the forward pass.
@@ -304,11 +306,10 @@ class PixelCNN(pl.LightningModule):
         if self.hparams.bias:
             x_hat = x_hat * self.x_hat_mask + self.x_hat_bias
 
-        # compute log_prob of the input
-        log_prob = self.log_prob(x, x_hat)
-
-        # compute custom negative log likelihood
-        loss = nll_loss(log_prob)
+        # compute negative log likelihood
+        criterion = nn.NLLLoss(reduction="mean")
+        x = (x.squeeze().long() + 1) // 2
+        loss = criterion(x_hat, x)
         return loss
 
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
