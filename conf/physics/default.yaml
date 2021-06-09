@@ -2,5 +2,5 @@
 L: 22
 # small number to avoid 0 in division and log
 epsilon: 1e-7
-# random couplings of the system
-coupling_path: ${oc.env:YOUR_RANDOM_COUPLINGS}
+# seed for random couplings of the system
+coupling_seed: 12345

@@ -278,9 +278,11 @@ class PixelCNN(pl.LightningModule):
             [num_sample, 1, self.hparams.physics.L, self.hparams.physics.L],
             device=self.device,
         )
+        np.random.seed(self.hparams.physics.coupling_seed)
         couplings = torch.from_numpy(
-            np.load(self.hparams.physics.coupling_path)
+            np.random.normal(0.0, 1.0, size=(self.hparams.physics.L ** 2, 2))
         ).float()
+        couplings = torch.swapaxes(couplings, 0, 1).reshape(2, 10, 10)
         couplings = np.repeat(couplings[None, :, :, :], num_sample, axis=0)
 
         sample = torch.cat((sample, couplings), axis=1)
