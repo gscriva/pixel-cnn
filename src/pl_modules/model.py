@@ -116,7 +116,7 @@ class PixelCNN(pl.LightningModule):
         layers = nn.ModuleList()
         layers.append(
             MaskedConv2d(
-                1,
+                3,
                 1 if self.hparams.net_depth == 1 else self.hparams.net_width,
                 self.hparams.kernel_size,
                 padding=(self.hparams.kernel_size - 1) // 2,
@@ -278,17 +278,23 @@ class PixelCNN(pl.LightningModule):
             [num_sample, 1, self.hparams.physics.L, self.hparams.physics.L],
             device=self.device,
         )
+        couplings = torch.from_numpy(
+            np.load(self.hparams.physics.coupling_path)
+        ).float()
+        couplings = np.repeat(couplings[None, :, :, :], num_sample, axis=0)
+
+        sample = torch.cat((sample, couplings), axis=1)
 
         for i in trange(self.hparams.physics.L):
             for j in trange(self.hparams.physics.L, leave=False):
                 x_hat = self._forward(sample).detach()
-                sample[:, :, i, j] = (
-                    torch.bernoulli(torch.exp(x_hat[:, 1, i, j]).unsqueeze(1)) * 2 - 1
+                sample[:, 0, i, j] = (
+                    torch.bernoulli(torch.exp(x_hat[:, 1, i, j])) * 2 - 1
                 )
         # compute probability of the sample
-        log_prob = self.log_prob(sample, x_hat[:, 1, :, :].unsqueeze(1))
+        log_prob = self.log_prob(sample[:, 0, :, :].unsqueeze(1), x_hat)
         return {
-            "sample": sample.squeeze(1).numpy(),
+            "sample": sample[:, 0, :, :].numpy(),
             "log_prob": log_prob.numpy(),
         }
 
@@ -308,7 +314,8 @@ class PixelCNN(pl.LightningModule):
 
         # compute negative log likelihood
         criterion = nn.NLLLoss(reduction="mean")
-        x = (x.squeeze().long() + 1) // 2
+        # take only the sample to compute the loss, not the couplings
+        x = (x[:, 0, :, :].long() + 1) // 2
         loss = criterion(x_hat, x)
         return loss
 

@@ -6,16 +6,19 @@ datamodule:
       _target_: pl_data.dataset.MyDataset
       name: train_100_lattice_2d_ising_spins
       path: ${oc.env:YOUR_TRAIN_DATASET_PATH}
+      coupling_path: ${oc.env:YOUR_RANDOM_COUPLINGS}
 
     val:
       _target_: pl_data.dataset.MyDataset
       name: val_100_lattice_2d_ising_spins
       path: ${oc.env:YOUR_VAL_DATASET_PATH}
+      coupling_path: ${oc.env:YOUR_RANDOM_COUPLINGS}
 
     test:
       _target_: pl_data.dataset.MyDataset
       name: test_100_lattice_2d_ising_spins
       path: ${oc.env:YOUR_TEST_DATASET_PATH}
+      coupling_path: ${oc.env:YOUR_RANDOM_COUPLINGS}
 
   num_workers:
     train: 4

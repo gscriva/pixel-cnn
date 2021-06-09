@@ -12,14 +12,25 @@ from common.utils import PROJECT_ROOT
 
 
 class MyDataset(Dataset):
-    def __init__(self, name: ValueNode, path: ValueNode, **kwargs):
+    def __init__(
+        self, name: ValueNode, path: ValueNode, coupling_path: ValueNode, **kwargs
+    ):
         super().__init__()
+        self.couplings_path = coupling_path
         self.path = path
         self.name = name
 
-        self.dataset = TensorDataset(
-            torch.from_numpy(np.load(self.path)).unsqueeze(1).float()
-        )
+        sample = np.load(self.path)
+        # couplings have shape 2 x L x L
+        couplings = np.load(self.couplings_path)
+        couplings = np.repeat(couplings[None, :, :, :], sample.shape[0], axis=0)
+
+        # dataset has now shape N x 3 x L x L
+        dataset = np.concatenate((sample[:, None, :, :], couplings), axis=1)
+
+        self.dataset = TensorDataset(torch.from_numpy(dataset).float())
+
+        del couplings, dataset, sample
 
     def __len__(self) -> int:
         return len(self.dataset)
