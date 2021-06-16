@@ -1,8 +1,8 @@
 # metadata specialised for each experiment
 core:
-  version: 0.0.1
+  version: 0.1.0
   tags:
-    - first-commit
+    - change-loss
 
 defaults:
   - data: default
