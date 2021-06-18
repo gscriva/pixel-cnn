@@ -11,7 +11,7 @@ from omegaconf import DictConfig
 from torch.optim import Optimizer
 from tqdm import trange
 
-from common.utils import PROJECT_ROOT, nll_loss
+from common.utils import PROJECT_ROOT
 
 
 class ResBlock(nn.Module):
@@ -104,14 +104,14 @@ class PixelCNN(pl.LightningModule):
 
         self.save_hyperparameters()  # populate self.hparams with args and kwargs automagically!
 
-        # Force the first x_hat to be 0.5
+        # Force the first x_hat to be log(0.5)
         if self.hparams.bias:
             self.register_buffer("x_hat_mask", torch.ones([self.hparams.physics.L] * 2))
             self.x_hat_mask[0, 0] = 0
             self.register_buffer(
                 "x_hat_bias", torch.zeros([self.hparams.physics.L] * 2)
             )
-            self.x_hat_bias[0, 0] = 0.5
+            self.x_hat_bias[0, 0] = torch.log(torch.Tensor([0.5]))
 
         layers = nn.ModuleList()
         layers.append(
