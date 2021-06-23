@@ -4,5 +4,5 @@ net_width: 32
 activation: "silu"
 kernel_size: 7
 bias: False
-res_block: False
-final_conv: False
+res_block: True
+final_conv: True
