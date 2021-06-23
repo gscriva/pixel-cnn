@@ -286,7 +286,7 @@ class PixelCNN(pl.LightningModule):
                     torch.bernoulli(torch.exp(x_hat[:, 1, i, j]).unsqueeze(1)) * 2 - 1
                 )
         # compute probability of the sample
-        log_prob = self.log_prob(sample, x_hat[:, 1, :, :].unsqueeze(1))
+        log_prob = self.log_prob(sample, x_hat)
         return {
             "sample": sample.squeeze(1).numpy(),
             "log_prob": log_prob.numpy(),
