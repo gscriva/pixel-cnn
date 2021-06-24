@@ -216,14 +216,12 @@ class PixelCNN(pl.LightningModule):
         """
         layers = nn.ModuleList()
         layers.append(GetActivation(self.hparams.activation))
-        layers.append(
-            nn.Conv2d(in_channels, in_channels // 2, 1, bias=self.hparams.bias)
-        )
+        layers.append(nn.Conv2d(in_channels, in_channels, 1, bias=self.hparams.bias))
         layers.append(GetActivation(self.hparams.activation))
         layers.append(
             MaskedConv2d(
-                in_channels // 2,
-                in_channels // 2,
+                in_channels,
+                in_channels,
                 self.hparams.kernel_size,
                 padding=(self.hparams.kernel_size - 1) // 2,
                 bias=self.hparams.bias,
@@ -231,9 +229,7 @@ class PixelCNN(pl.LightningModule):
             )
         )
         layers.append(GetActivation(self.hparams.activation))
-        layers.append(
-            nn.Conv2d(in_channels // 2, out_channels, 1, bias=self.hparams.bias)
-        )
+        layers.append(nn.Conv2d(in_channels, out_channels, 1, bias=self.hparams.bias))
         return ResBlock(nn.Sequential(*layers))
 
     def log_prob(self, sample: torch.Tensor, x_hat: torch.Tensor) -> torch.Tensor:
