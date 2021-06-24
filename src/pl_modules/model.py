@@ -215,7 +215,6 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Residual Pixel block.
         """
         layers = nn.ModuleList()
-        layers.append(GetActivation(self.hparams.activation))
         layers.append(nn.Conv2d(in_channels, in_channels, 1, bias=self.hparams.bias))
         layers.append(GetActivation(self.hparams.activation))
         layers.append(
@@ -228,8 +227,6 @@ class PixelCNN(pl.LightningModule):
                 mask_type="B",
             )
         )
-        layers.append(GetActivation(self.hparams.activation))
-        layers.append(nn.Conv2d(in_channels, out_channels, 1, bias=self.hparams.bias))
         return ResBlock(nn.Sequential(*layers))
 
     def log_prob(self, sample: torch.Tensor, x_hat: torch.Tensor) -> torch.Tensor:
