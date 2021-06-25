@@ -146,14 +146,6 @@ class PixelCNN(pl.LightningModule):
 
         if self.hparams.final_conv:
             layers.append(
-                ConvBlock(
-                    self.hparams.net_width,
-                    self.hparams.net_width,
-                    1,
-                    self.hparams.activation,
-                )
-            )
-            layers.append(
                 ConvBlock(self.hparams.net_width, 2, 1, self.hparams.activation)
             )
 
