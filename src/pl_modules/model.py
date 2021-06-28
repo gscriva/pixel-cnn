@@ -136,7 +136,7 @@ class PixelCNN(pl.LightningModule):
             ]
         )
 
-        if self.hparams.net_depth >= 2 and not self.hparams.final_conv:
+        if self.hparams.net_depth >= 2:
             layers.append(
                 self._build_simple_block(
                     self.hparams.net_width,
@@ -145,6 +145,14 @@ class PixelCNN(pl.LightningModule):
             )
 
         if self.hparams.final_conv:
+            layers.append(
+                ConvBlock(
+                    self.hparams.net_width,
+                    self.hparams.net_width,
+                    1,
+                    self.hparams.activation,
+                )
+            )
             layers.append(
                 ConvBlock(self.hparams.net_width, 2, 1, self.hparams.activation)
             )
