@@ -14,6 +14,15 @@ from tqdm import trange
 from common.utils import PROJECT_ROOT
 
 
+class PixelBlock(nn.Module):
+    def __init__(self, block) -> None:
+        super(PixelBlock, self).__init__()
+        self.block = block
+
+    def forward(self, x):
+        return self.block(x)
+
+
 class ResBlock(nn.Module):
     def __init__(self, block) -> None:
         super(ResBlock, self).__init__()
@@ -21,6 +30,15 @@ class ResBlock(nn.Module):
 
     def forward(self, x):
         return x + self.block(x)
+
+
+class FinalBlock(nn.Module):
+    def __init__(self, block) -> None:
+        super(FinalBlock, self).__init__()
+        self.block = block
+
+    def forward(self, x):
+        return self.block(x)
 
 
 class MaskedConv2d(nn.Conv2d):
@@ -136,7 +154,7 @@ class PixelCNN(pl.LightningModule):
             ]
         )
 
-        if self.hparams.net_depth >= 2 and not self.hparams.final_conv:
+        if self.hparams.net_depth >= 2:
             layers.append(
                 self._build_simple_block(
                     self.hparams.net_width,
@@ -145,17 +163,7 @@ class PixelCNN(pl.LightningModule):
             )
 
         if self.hparams.final_conv:
-            layers.append(
-                ConvBlock(
-                    self.hparams.net_width,
-                    self.hparams.net_width,
-                    1,
-                    self.hparams.activation,
-                )
-            )
-            layers.append(
-                ConvBlock(self.hparams.net_width, 2, 1, self.hparams.activation)
-            )
+            layers.append(self._build_final_block(self.hparams.net_width))
 
         layers.append(nn.LogSoftmax(dim=1))
         self.net = nn.Sequential(*layers)
@@ -201,7 +209,7 @@ class PixelCNN(pl.LightningModule):
                 mask_type="B",
             )
         )
-        return nn.Sequential(*layers)
+        return PixelBlock(nn.Sequential(*layers))
 
     def _build_res_block(self, in_channels: int, out_channels: int) -> nn.Module:
         """Build a convolutional residual block, with a simple conv2d, 
@@ -215,26 +223,33 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Residual Pixel block.
         """
         layers = nn.ModuleList()
-        layers.append(GetActivation(self.hparams.activation))
-        layers.append(
-            nn.Conv2d(in_channels, in_channels // 2, 1, bias=self.hparams.bias)
-        )
+        layers.append(nn.Conv2d(in_channels, in_channels, 1, bias=self.hparams.bias))
         layers.append(GetActivation(self.hparams.activation))
         layers.append(
             MaskedConv2d(
-                in_channels // 2,
-                in_channels // 2,
+                in_channels,
+                out_channels,
                 self.hparams.kernel_size,
                 padding=(self.hparams.kernel_size - 1) // 2,
                 bias=self.hparams.bias,
                 mask_type="B",
             )
         )
-        layers.append(GetActivation(self.hparams.activation))
-        layers.append(
-            nn.Conv2d(in_channels // 2, out_channels, 1, bias=self.hparams.bias)
-        )
         return ResBlock(nn.Sequential(*layers))
+
+    def _build_final_block(self, in_channels: int) -> nn.Module:
+        """Build a final convolutional block with a conv2d and an activation function.
+
+        Args:
+            in_channels (int): Input channels.
+
+        Returns:
+            nn.Module: Final Convolutional Block.
+        """
+        layers = nn.ModuleList()
+        layers.append(ConvBlock(in_channels, in_channels, 1, self.hparams.activation,))
+        layers.append(ConvBlock(in_channels, 2, 1, self.hparams.activation))
+        return FinalBlock(nn.Sequential(*layers))
 
     def log_prob(self, sample: torch.Tensor, x_hat: torch.Tensor) -> torch.Tensor:
         """Method to compute the logarithm of the probabilty of sample
