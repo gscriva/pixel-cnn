@@ -227,11 +227,11 @@ def mcmc(
             "accepted": accepted,
             "avg_eng": avg_eng,
             "std_eng": std_eng,
-            "samples": samples,
-            "energies": energies,
+            "sample": samples,
+            "energy": energies,
         }
         print("\nSaving MCMC output as {0}".format(filename))
-        np.savez(filename, out)
+        np.savez(filename, **out)
 
     print(
         "\nAccepted proposals: {0} ({1} %)\n".format(
