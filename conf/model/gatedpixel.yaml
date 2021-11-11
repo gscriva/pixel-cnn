@@ -1,0 +1,8 @@
+_target_: pl_modules.model.GatedPixelCNN
+net_depth: 5
+net_width: 16
+activation: "silu"
+kernel_size: 7
+bias: False
+res_block: True
+final_conv: True

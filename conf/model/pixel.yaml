@@ -1,6 +1,6 @@
 _target_: pl_modules.model.PixelCNN
-net_depth: 3
-net_width: 32
+net_depth: 5
+net_width: 16
 activation: "silu"
 kernel_size: 7
 bias: False

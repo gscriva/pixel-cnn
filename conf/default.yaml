@@ -8,7 +8,7 @@ defaults:
   - data: default
   - hydra: default
   - logging: default
-  - model: default
+  - model: pixel
   - optim: default
   - train: default
   - physics: default
