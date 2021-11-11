@@ -7,7 +7,7 @@ wandb:
   save_dir: null
   entity: null
   log_model: True
-  mode: 'online'
+  mode: 'offline'
 
 wandb_watch:
   log: 'all'

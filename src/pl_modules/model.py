@@ -88,8 +88,7 @@ class ConvBlock(nn.Module):
 
 
 class GetActivation(nn.Module):
-    """Returns the requested activation function.
-    """
+    """Returns the requested activation function."""
 
     def __init__(self, activation) -> None:
         super(GetActivation, self).__init__()
@@ -166,12 +165,12 @@ class PixelCNN(pl.LightningModule):
             layers.append(self._build_final_block(self.hparams.net_width))
 
         layers.append(nn.LogSoftmax(dim=1))
-        self.net = nn.Sequential(*layers)
+        self.pixelcnn = nn.Sequential(*layers)
 
     def _build_pixel_block(
         self, in_channels: int, out_channels: int, res_block: bool
     ) -> nn.Module:
-        """Returns a Residual or a Simple Pixel Block. 
+        """Returns a Residual or a Simple Pixel Block.
 
         Args:
             in_channels (int): Input channels.
@@ -212,8 +211,8 @@ class PixelCNN(pl.LightningModule):
         return PixelBlock(nn.Sequential(*layers))
 
     def _build_res_block(self, in_channels: int, out_channels: int) -> nn.Module:
-        """Build a convolutional residual block, with a simple conv2d, 
-        an activation function and a masked convolutional layer. 
+        """Build a convolutional residual block, with a simple conv2d,
+        an activation function and a masked convolutional layer.
 
         Args:
             in_channels (int): Input channels.
@@ -247,7 +246,14 @@ class PixelCNN(pl.LightningModule):
             nn.Module: Final Convolutional Block.
         """
         layers = nn.ModuleList()
-        layers.append(ConvBlock(in_channels, in_channels, 1, self.hparams.activation,))
+        layers.append(
+            ConvBlock(
+                in_channels,
+                in_channels,
+                1,
+                self.hparams.activation,
+            )
+        )
         layers.append(ConvBlock(in_channels, 2, 1, self.hparams.activation))
         return FinalBlock(nn.Sequential(*layers))
 
@@ -273,7 +279,7 @@ class PixelCNN(pl.LightningModule):
         Returns:
             torch.Tensor: prediction.
         """
-        x_hat = self.net(x)
+        x_hat = self.pixelcnn(x)
 
         # Force the first x_hat to be 0.5
         if self.hparams.bias:
@@ -308,14 +314,14 @@ class PixelCNN(pl.LightningModule):
         }
 
     def step(self, x) -> torch.Tensor:
-        """Method for the forward pass.
+        """Method for the forward pass (training).
         'training_step', 'validation_step' and 'test_step' should call
         this method in order to compute the loss.
 
         Returns:
             torch.Tensor: prediction.
         """
-        x_hat = self.net(x)
+        x_hat = self.pixelcnn(x)
 
         # Force the first x_hat to be 0.5
         if self.hparams.bias:
@@ -330,27 +336,37 @@ class PixelCNN(pl.LightningModule):
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         loss = self.step(batch)
         self.log_dict(
-            {"train_loss": loss}, on_step=True, on_epoch=True, prog_bar=True,
+            {"train_loss": loss},
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
         )
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         loss = self.step(batch)
         self.log_dict(
-            {"val_loss": loss}, on_step=False, on_epoch=True, prog_bar=True,
+            {"val_loss": loss},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
         )
         return loss
 
     def test_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
         loss = self.step(batch)
-        self.log_dict({"test_loss": loss},)
+        self.log_dict(
+            {"test_loss": loss},
+        )
         return loss
 
-    def configure_optimizers(self,) -> Tuple[Sequence[Optimizer], Sequence[Any]]:
+    def configure_optimizers(
+        self,
+    ) -> Tuple[Sequence[Optimizer], Sequence[Any]]:
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
 
         Return:
-            Tuple: The first list has multiple optimizers, the second a list of LR schedulers (or lr_dict). 
+            Tuple: The first list has multiple optimizers, the second a list of LR schedulers (or lr_dict).
                     May be present only one optimizer and one scheduler.
         """
         opt = hydra.utils.instantiate(
