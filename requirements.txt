@@ -2,7 +2,7 @@
 torch==1.8.1
 torchvision==0.9.1
 torchtext==0.9.1
-pytorch-lightning==1.2.5
+pytorch-lightning==1.6.0
 hydra-core==1.1.0.dev5
 wandb==0.10.23
 streamlit>=1.11.1
